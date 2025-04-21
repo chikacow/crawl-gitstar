@@ -206,7 +206,7 @@ def crawl_release(owner, repo, repo_id):
                 releases.sort(key=lambda x: x.get("created_at", ""), reverse=False)
                 # Gọi multi-thread crawl commit cho từng release
                 with ThreadPoolExecutor(max_workers=5) as commit_executor:
-                    for i in range(len(releases) - 1, 0, -1):
+                    for i in range(len(releases) - 1, -1, -1):
                         release = releases[i]
                         prev_release = releases[i - 1]
 
