@@ -14,62 +14,71 @@ class TokenManager:
         """
         self.tokens = tokens
         self.current_token_index = 0
-        self.token_usage = {token: {"count": 0, "reset_time": 0} for token in tokens}  # Lưu trữ số lượng yêu cầu và thời gian reset
+        self.token_usage = {token: {"count": 0, "reset_time": 0} for token in tokens}
 
     def get_token(self):
         """
-        Lấy token theo vòng quay.
-        :return: token GitHub.
+        Lấy token hợp lệ, nếu tất cả đều hết quota thì chờ đến khi reset.
+        :return: Token GitHub còn usable.
         """
-        token = self.tokens[self.current_token_index]
-        self.current_token_index = (self.current_token_index + 1) % len(self.tokens)
-        return token
+        for _ in range(len(self.tokens)):
+            token = self.tokens[self.current_token_index]
+            self.current_token_index = (self.current_token_index + 1) % len(self.tokens)
+
+            if self.is_token_usable(token):
+                return token
+            else:
+                print(f"⚠ Token bị hết quota, thử token tiếp theo...")
+
+        # Nếu tất cả token đều hết quota → chờ reset rồi thử lại
+        self.wait_for_reset()
+        return self.get_token()
+
+    def is_token_usable(self, token):
+        """
+        Kiểm tra token còn usable không (còn quota).
+        """
+        headers = {"Authorization": f"token {token}"}
+        url = "https://api.github.com/rate_limit"
+        try:
+            resp = requests.get(url, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                remaining = data.get("resources", {}).get("core", {}).get("remaining", 0)
+                reset_time = data.get("resources", {}).get("core", {}).get("reset", 0)
+                self.token_usage[token] = {"count": 5000 - remaining, "reset_time": reset_time}
+                return remaining > 0
+            else:
+                print(f"✘ Error checking rate limit for token: {token}")
+        except requests.RequestException as e:
+            print(f"✘ Request error while checking token rate: {e}")
+        return False
 
     def check_rate_limit(self):
         """
-        Kiểm tra rate limit của tất cả các token.
-        :return: True nếu tất cả các token đã chạm rate limit, False nếu không.
+        Kiểm tra xem tất cả token có đều hết quota không.
+        :return: True nếu tất cả token hết quota, False nếu còn ít nhất 1 usable.
         """
+        exhausted = 0
         for token in self.tokens:
-            headers = {"Authorization": f"token {token}"}
-            url = "https://api.github.com/rate_limit"
-            try:
-                resp = requests.get(url, headers=headers)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    remaining = data.get("resources", {}).get("core", {}).get("remaining", 0)
-                    reset_time = data.get("resources", {}).get("core", {}).get("reset", 0)
-                    self.token_usage[token] = {"count": 5000 - remaining, "reset_time": reset_time}
-                    if remaining > 0:
-                        return False  # Nếu còn token nào chưa hết rate limit
-                else:
-                    print(f"✘ Error checking rate limit for token: {token}")
-            except requests.RequestException as e:
-                print(f"✘ Error while checking rate limit: {e}")
-        return True  # Nếu tất cả các token đều đã hết rate limit
+            if not self.is_token_usable(token):
+                exhausted += 1
+        return exhausted == len(self.tokens)
 
     def wait_for_reset(self):
         """
-        Chờ cho đến khi tất cả các token reset lại rate limit.
+        Chờ đến khi token sớm nhất được reset.
         """
-        # Tính thời gian còn lại cho tất cả các token
         reset_times = [self.token_usage[token]["reset_time"] for token in self.tokens]
-        sleep_time = max(reset_times) - time.time()
+        soonest_reset = min(reset_times)
+        sleep_time = soonest_reset - time.time()
         if sleep_time > 0:
-            print(f"All tokens hit rate limit. Sleeping for {sleep_time} seconds...")
-            time.sleep(sleep_time)  # Chờ cho đến khi tất cả token được reset
+            print(f"⏳ Tất cả token hết quota. Đợi {sleep_time:.2f} giây để reset...")
+            time.sleep(sleep_time + 1)  # Đợi dư 1 giây để chắc chắn
+        else:
+            print("✔ Token đã reset. Tiếp tục...")
 
-# Kết nối DB
-# connection = mysql.connector.connect(
-#     host="localhost",
-#     port=3306,
-#     user="root",  
-#     password="saber1108",  
-#     database="crawl_data",
-#     use_unicode=True,
-#     autocommit=True
-# )
-# cursor = connection.cursor()
+
 
 # SQL query để insert release và commit vào DB
 insert_release_query = """
@@ -81,10 +90,7 @@ insert_commit_query = """
 INSERT IGNORE INTO `commit` (hash, message, releaseID)
 VALUES (%s, %s, %s)
 """
-# insert_commit_query = """
-# INSERT IGNORE INTO commit (sha, commit_message, release_id)
-# VALUES (%s, %s, %s)
-# """
+
 from mysql.connector import pooling
 
 dbconfig = {
@@ -98,7 +104,7 @@ dbconfig = {
 }
 
 # create a pool of 10 connections
-cnxpool = pooling.MySQLConnectionPool(pool_name="mypool", pool_size=30, **dbconfig)
+cnxpool = pooling.MySQLConnectionPool(pool_name="mypool", pool_size=32, **dbconfig)
 
 def save_commit_to_db(cursor, sha, commit_message, release_id):
     try:
@@ -119,8 +125,8 @@ def crawl_commit_between_tags(owner, repo, base_tag, head_tag, release_id):
     page = 1  # Bắt đầu từ trang 1
     while True:
         try:
-            if token_manager.check_rate_limit():
-                token_manager.wait_for_reset()
+            # if token_manager.check_rate_limit():
+            #     token_manager.wait_for_reset()
             
             # Thêm tham số page vào request để phân trang
             params = {"page": page, "per_page": 100}  # Tối đa 100 commits mỗi trang
@@ -191,8 +197,8 @@ def crawl_release(owner, repo, repo_id):
             params = {"page": page, "per_page": 100} # maximum for per_page is 100 in api github
             try:
                 # Kiểm tra rate limit trước khi gửi yêu cầu
-                if token_manager.check_rate_limit():
-                    token_manager.wait_for_reset()  # Nếu tất cả token chạm rate limit, chờ reset
+                # if token_manager.check_rate_limit():
+                #     token_manager.wait_for_reset()  # Nếu tất cả token chạm rate limit, chờ reset
 
                 resp = requests.get(url, headers=headers, params=params)
                 if resp.status_code != 200:
@@ -205,7 +211,7 @@ def crawl_release(owner, repo, repo_id):
                     break
                 releases.sort(key=lambda x: x.get("created_at", ""), reverse=False)
                 # Gọi multi-thread crawl commit cho từng release
-                with ThreadPoolExecutor(max_workers=5) as commit_executor:
+                with ThreadPoolExecutor(max_workers=8) as commit_executor:
                     for i in range(len(releases) - 1, -1, -1):
                         release = releases[i]
                         prev_release = releases[i - 1]
@@ -219,8 +225,6 @@ def crawl_release(owner, repo, repo_id):
                         prev_tag = prev_release.get("tag_name")
                         # Lưu release vào DB
                         save_release_to_db(cursor, release_id, release_tag, body, repo_id)
-
-                        crawl_commit_between_tags(owner, repo, prev_tag, release_tag, release_id)
 
                         # Gọi crawl commit cho release này
                         commit_executor.submit(crawl_commit_between_tags, owner, repo, prev_tag, release_tag, release_id)
@@ -244,7 +248,7 @@ def crawl_repo():
     cursor = conn.cursor()
 
 
-    query_select_all = "SELECT user, name, id FROM repo where id = 5009"
+    query_select_all = "SELECT user, name, id FROM repo where id > 0"
     cursor.execute(query_select_all)
     
     repos = cursor.fetchall()  # Giả sử bạn đã có bảng 'repos' chứa thông tin repo cần crawl
@@ -253,7 +257,7 @@ def crawl_repo():
     conn.close()
 
     futures = []
-    with ThreadPoolExecutor(max_workers=5) as repo_executor:
+    with ThreadPoolExecutor(max_workers=8) as repo_executor:
         for user, name, id in repos:
             # repo_executor.submit(crawl_release, user, name, id)
             future = repo_executor.submit(crawl_release, user, name, id)
@@ -278,7 +282,7 @@ def github_token_manager():
     return GITHUB_TOKENS
 
 if __name__ == "__main__":
-    GITHUB_TOKENS = ['YOUR_TOKEN']
+    GITHUB_TOKENS = github_token_manager()
     token_manager = TokenManager(GITHUB_TOKENS)
     crawl_repo()
 
