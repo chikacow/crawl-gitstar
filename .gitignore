@@ -1,2 +1,6 @@
 .env
+*/.env
+**/.env
+.venv
 chromedriver.exe
+__pycache__/
