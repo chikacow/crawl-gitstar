@@ -6,6 +6,12 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+from datetime import datetime
+
+def log_time(message):
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
+
+
 class TokenManager:
     def __init__(self, tokens):
         """

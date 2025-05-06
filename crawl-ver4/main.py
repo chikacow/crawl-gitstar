@@ -32,5 +32,4 @@ if __name__ == "__main__":
         sys.exit("? where the fuk is pat in .env")
 
     tm = TokenManager(tokens)
-    max_workers = min(8, len(tokens) * 2)
-    crawl_all_repos(tm, max_workers=max_workers)
+    crawl_all_repos(tm, 32)

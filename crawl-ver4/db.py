@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import pooling
 from contextlib import contextmanager
+import time
 
 POOL_SIZE = 32
 
@@ -9,7 +10,7 @@ dbconfig = {
     "host": "localhost",
     "port": 3306,
     "user": "root",
-    "password": "kienkienkien",
+    "password": "mysqL2004@",
     "database": "crawl",
     "autocommit": True,
     "use_unicode": True,
@@ -39,7 +40,14 @@ def save_releases_bulk(cursor, releases):
         INSERT IGNORE INTO `release` (id, version, content, repoID)
         VALUES (%s, %s, %s, %s)
     """
-    cursor.executemany(query, releases)
+    
+    try:
+        cursor.executemany(query, releases)
+        time.sleep(0.5) 
+    except mysql.connector.Error as e:
+        
+        print(f"✘ Error saving commit {e}")
+        
 
 
 def save_commits_bulk(cursor, commits):
@@ -50,7 +58,12 @@ def save_commits_bulk(cursor, commits):
         INSERT IGNORE INTO `commit` (hash, message, releaseID)
         VALUES (%s, %s, %s)
     """
-    cursor.executemany(query, commits)
+    try:
+        cursor.executemany(query, commits)
+        
+    except mysql.connector.Error as e:
+        
+        print(f"✘ Error saving commit {e}")
 
 
 def save_all_data(releases, commits):
