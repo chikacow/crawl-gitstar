@@ -4,7 +4,10 @@ Một công cụ crawler tự động dùng Python để thu thập thông tin *
 
 ---
 **Submit version: `crawl-ver3.5`**  
-📄 [Documentation](https://docs.google.com/document/d/1lwXeUoKd8zy9hWcmY06YB_1gIMSSKhVdP6vh4iSh6rc/edit?tab=t.0#heading=h.br6grfny7kk8)
+## 📄 [DOCUMENTATION](https://docs.google.com/document/d/1lwXeUoKd8zy9hWcmY06YB_1gIMSSKhVdP6vh4iSh6rc/edit?tab=t.0#heading=h.br6grfny7kk8)
+
+**_Thầy có thể vào đây để đọc full ạ 😄._**
+
 
 
 ``` directory
