@@ -86,6 +86,44 @@ MySQL sử dụng **connection pooling** để tái sử dụng kết nối và 
 Mỗi repository sẽ được xử lý trong một **thread riêng biệt**, giúp tăng tốc độ crawl đáng kể.
 
 ---
+## ❗ Những vấn đề khi thực hiện dự án
+
+### 🔒 Rate Limit của GitHub API
+- GitHub API giới hạn:
+  - **50 requests/giờ** với các request **không có token** (unauthenticated).
+  - **5000 requests/giờ** khi sử dụng **Personal Access Token (PAT)**.
+- Tuy nhiên, hệ thống cần crawl dữ liệu từ hàng ngàn repositories lớn ⇒ giới hạn này là **rào cản lớn** dẫn đến:
+  - Thời gian xử lý **kéo dài**.
+  - Phải **timeout 1 giờ** mỗi khi hết giới hạn request.
+
+### 🐢 Tốc độ crawl chậm, chưa tối ưu tài nguyên hệ điều hành
+- Ban đầu, hệ thống sử dụng **xử lý đơn luồng**, chưa tận dụng được hiệu quả của CPU.
+- Điều này làm cho quá trình crawl dữ liệu trở nên **rất chậm** và **lãng phí tài nguyên**.
+
+### 🔣 Ký tự đặc biệt trong response message
+- Các response từ GitHub (releases, commits, ...) thường chứa:
+  - **Ký tự đặc biệt** như `\n`, `\t`, `'`, `"` và cú pháp markdown.
+- Điều này gây lỗi khi **insert vào MySQL** nếu không được xử lý đúng cách.
+
+### 🛠️ Xử lý đọc/ghi và tương tác với cơ sở dữ liệu
+- Hệ thống lâu dài và crawl đồng thời nhiều commits gây:
+  - **Connection timeout** với MySQL.
+  - Lưu từng commit sau mỗi timeout gây **tắc nghẽn và nặng nề**.
+- Việc mỗi luồng mở một kết nối riêng:
+  - Nếu số lượng lớn ⇒ tạo hàng **trăm kết nối đồng thời**.
+  - Gây **quá tải cho hệ điều hành và MySQL**, dễ dẫn tới timeout hoặc crash.
+
+### ♻️ Vấn đề trùng commit giữa các release
+- Khi dùng endpoint `/commits?sha=<tag>`:
+  - GitHub trả về các commit **có thể truy cập được từ tag đó**.
+- Do các tag thường trỏ tới các commit trong nhánh chính (`main`), nên:
+  - Các tag khác nhau thường **chia sẻ lịch sử commit giống nhau**.
+  - Ví dụ:
+    - `tag v1.2.0` và `tag v1.2.1` có thể trả về danh sách commit **giống nhau gần như hoàn toàn**.
+  - Dẫn tới **danh sách bị trùng lặp** giữa các release.
+
+
+
 
 ## 🚀 Cách chạy
 
