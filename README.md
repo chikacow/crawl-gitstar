@@ -35,9 +35,7 @@ crawl-gitstar/
 │   ├── crawl-v1.py
 │   ├── crawl_release_v2_final.py
 │   └── sample_token_switch.py
-│
-├── main.py
-└── README.md
+├── images/
 ```
 ---
 
@@ -127,6 +125,8 @@ ALTER TABLE `release` ADD CONSTRAINT `release_fk0` FOREIGN KEY (`repoID`) REFERE
 ALTER TABLE `commit` ADD CONSTRAINT `commit_fk2` FOREIGN KEY (`releaseID`) REFERENCES `release`(`id`);
 
 ```
+![Schema](images/db.png)
+
 
 ### 3. Tạo file .env chứa GitHub tokens
 Tạo file .env cùng cấp với script và thêm các token GitHub:
