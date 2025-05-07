@@ -120,14 +120,43 @@ dbconfig = {
 python crawler.py
 ```
 
-🛠 Các thành phần chính
-Thành phần	Mô tả
-TokenManager	Quản lý nhiều GitHub token và xử lý rate limit
-crawl_release()	Thu thập các release từ GitHub
-crawl_commit_between_tags()	Thu thập commit giữa 2 release tag
-save_release_to_db()	Lưu thông tin release vào MySQL
-save_commit_to_db()	Lưu thông tin commit vào MySQL
-crawl_repo()	Lấy danh sách repo từ DB và crawl từng cái
+### Tutorials:
+
+- Set up database, tạo các bảng và liên kết các bảng theo yêu cầu
+
+- Sử dụng selenium và chromedriver để crawl toàn bộ 5000 repo nhiều sao nhất từ GitStar
+
+- Triển khai các ý dưới đây cho các hàm crawl_repo(), crawl_commit(), crawl_release()
+
+  - Khi crawl được một release, lập tức crawl toàn bộ commit liên quan, thay vì để sau cùng.
+
+  - Triển khai cơ chế xoay vòng tokens khi bị giới hạn request bằng cách triển khai lớp TokenManager
+  
+  - Sử dụng đa luồng để crawl song song, rút ngắn thời gian xử lý toàn cục.
+  
+  - Tạo mới kết nối cho mỗi lần lưu commit để tránh timeout.
+  
+  - Sử dụng connection pool để tái sử dụng kết nối có sẵn thay vì tạo mới.
+  
+  - Chỉ tạo kết nối cho mỗi release, không mở cho từng commit riêng lẻ nữa.
+  
+  - Các tag chia sẻ cùng commit history, vì vậy mỗi lần query theo tag, kết quả chứa các commit đã từng xuất hiện ở tag trước.
+  
+  - Lọc trùng commit giữa các release bằng cách so sánh danh sách commit sha giữa các tag, chỉ giữ các commit thực sự mới so với tag trước.
+
+- Cải thiện khả năng bảo trì và phát triển của hệ thống bằng việc tách nhỏ file tổng thành các file chức năng riêng biệt, có tính tái sử dụng hơn. Các query tới database cũng cần được tách riêng giúp logic tường minh và dễ cải tiến.
+
+### Tổng kết
+
+| Trạng thái                                    | Mô Tả                                                                                             |
+|------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Done                                     | Triển khai được crawler cơ bản, thu thập tự động (có thể bị chặn)                                |
+| Done                                     | Đánh giá và nêu nguyên nhân của các vấn đề gặp phải                                              |
+| Done                                     | Cải tiến và so sánh hiệu suất với phiên bản ban đầu                                               |
+| Done                                     | Tối ưu quá trình đọc ghi database                                                                  |
+| Done                                     | Song song hoá (đa luồng) quá trình crawl                                                         |
+| Done	                                   | Giải quyết vấn đề crawler bị trang web chặn khi truy cập quá nhiều bằng một số kỹ thuật hoặc design pattern tương ứng |
+| Done                                     | Đánh giá các giải pháp tối ưu khác nhau                                                           |
 
 
 📄 License
