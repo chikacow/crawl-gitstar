@@ -3,6 +3,43 @@
 Một công cụ crawler tự động dùng Python để thu thập thông tin **release** và **commit giữa các phiên bản release** của các repository trên GitHub. Dữ liệu được lưu vào MySQL database.
 
 ---
+**Submit version: `crawl-ver3.5`**  
+📄 [Documentation](https://docs.google.com/document/d/1lwXeUoKd8zy9hWcmY06YB_1gIMSSKhVdP6vh4iSh6rc/edit?tab=t.0#heading=h.br6grfny7kk8)
+
+
+``` directory
+crawl-gitstar/
+│── crawl-repo-gitstar/
+│   ├── chromedriver
+│   ├── crawl.py
+|
+├── crawl-ver3.5/
+|   ├── .env
+│   ├── crawler/   
+|   	├── repo_crawler.py
+|	├── release_crawler.py
+|	└── commit_crawler.py
+│   ├── db.py
+│   ├── config.py
+│   ├── token_manager.py
+│   └── main.py
+|
+├── crawl-ver4-beta/
+|   ├── .env
+│   ├── db.py
+|   ├── github_crawler.py
+|   ├── token_manager.py
+│   └── main.py
+│
+├── old-version/
+│   ├── crawl-v1.py
+│   ├── crawl_release_v2_final.py
+│   └── sample_token_switch.py
+│
+├── main.py
+└── README.md
+```
+---
 
 ## 📦 Tính năng
 
@@ -120,11 +157,11 @@ dbconfig = {
 python crawler.py
 ```
 
-### Tutorials:
+### Tutorials: (ver 3.5)
 
 - Set up database, tạo các bảng và liên kết các bảng theo yêu cầu
 
-- Sử dụng selenium và chromedriver để crawl toàn bộ 5000 repo nhiều sao nhất từ GitStar
+- Sử dụng selenium và chromedriver để crawl toàn bộ 5000 repo nhiều sao nhất từ GitStar (folder crawl-gitstar)
 
 - Triển khai các ý dưới đây cho các hàm crawl_repo(), crawl_commit(), crawl_release()
 
