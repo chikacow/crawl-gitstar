@@ -20,4 +20,4 @@ def crawl_repo(token_manager):
             futures.append(executor.submit(crawl_release, user, name, repo_id, token_manager))
         for future in futures:
             future.result()
-    print("✅ All repos processed.")
+    print("All repos processed.")
