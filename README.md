@@ -226,15 +226,14 @@ python crawler.py
 
 ### Tổng kết
 
-| Trạng thái                                    | Mô Tả                                                                                             |
-|------------------------------------------|--------------------------------------------------------------------------------------------------|
-| Done                                     | Triển khai được crawler cơ bản, thu thập tự động (có thể bị chặn)                                |
-| Done                                     | Đánh giá và nêu nguyên nhân của các vấn đề gặp phải                                              |
-| Done                                     | Cải tiến và so sánh hiệu suất với phiên bản ban đầu                                               |
-| Done                                     | Tối ưu quá trình đọc ghi database                                                                  |
-| Done                                     | Song song hoá (đa luồng) quá trình crawl                                                         |
-| Done	                                   | Giải quyết vấn đề crawler bị trang web chặn khi truy cập quá nhiều bằng một số kỹ thuật hoặc design pattern tương ứng |
-| Done                                     | Đánh giá các giải pháp tối ưu khác nhau                                                           |
+| **Tính năng**                 | **Mô tả chi tiết**                                                                 |
+|------------------------------|-------------------------------------------------------------------------------------|
+| **Xoay vòng nhiều token**      | Tự động đổi token khi gặp rate limit và sleep khi tất cả token hết request       |
+| **Database connection pool**          | Tái sử dụng kết nối thay vì tạo mới mỗi lần, giảm chi phí mở kết nối đến database.                    |
+| **Multithreading** | Crawl với nhiều luồng, tăng khả năng xử lý bất đồng bộ        |
+| **Sử dụng Github API /compare** | Tránh trùng lặp các commit đã tồn tại trong release trước     |
+| **Sử dụng RDBMS MySQL Workbench**        | Cho phép dữ liệu chứa các kí tự đặc biệt, markdown           |
+| **README**      | Mô tả quá trình thực hiện, khó khăn và giải pháp một cách tường minh   |
 
 
 📄 License
